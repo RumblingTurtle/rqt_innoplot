@@ -5,19 +5,33 @@ import rospkg
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
-from inno_control.controllers.A1.shared_state import A1SharedState
+from os import listdir
+from os.path import isfile, join
+import struct
+import os
 
+def read_shm(name):
+    result = []
+    path = "/dev/shm/"+name
+    data = open(path,"rb").read()
+    size = int(len(data)/4)
+    try:
+        return list(struct.unpack('f'*size,data))
+    except:
+        return None
+    
 class MyPlugin(Plugin):
 
     def __init__(self, context):
         super(MyPlugin, self).__init__(context)
         # Give QObjects reasonable names
         self.setObjectName('MyPlugin')
-        shared_state = A1SharedState()
-        print(shared_state.shared_state.names())
         # Process standalone plugin command-line arguments
         from argparse import ArgumentParser
         parser = ArgumentParser()
+        shm_names = [f for f in listdir("/dev/shm") if isfile(join("/dev/shm", f)) and "unitreepy.a1." in f] #currently available buffers
+        print(shm_names)
+        print(read_shm(shm_names[1]))
         # Add argument(s) to the parser.
         parser.add_argument("-q", "--quiet", action="store_true",
                       dest="quiet",
